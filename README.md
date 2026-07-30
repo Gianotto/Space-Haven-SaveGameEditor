@@ -63,7 +63,7 @@ stored in savegames. No other game material is redistributed.
 | Tab | What you can change |
 |---|---|
 | **Game** | clock (days/hours/turns), credits, seed, player faction, difficulty and the scenario rules (monsters, robots, solar flares, asteroids…) |
-| **Crew** | name, needs (health, food, energy, comfort, mood…), attributes, skills with level/cap/exp, traits, conditions and work priorities. The list shows one ship at a time — the player's by default — and stays pinned while you scroll. It includes crew piloting a miner, builder or fighter; visitors from other factions stay hidden until you ask for them |
+| **Crew** | name, needs (health, food, energy, comfort, mood…), attributes, skills with level/cap/exp, traits, conditions and work priorities, plus creating a new crew member on the selected ship. The list shows one ship at a time — the player's by default — and stays pinned while you scroll. It includes crew piloting a miner, builder or fighter; visitors from other factions stay hidden until you ask for them |
 | **Storage** | totals per resource and per ship, quantity of each stack, adding a new resource to a rack, or creating one of each at once |
 | **Research** | state of every technology; complete or reset one or all |
 | **Ships** | name, ID, fog of war |
@@ -182,6 +182,30 @@ ship. The editor merges the two, marking where each person is.
 Ships also get visitors — merchants using your medical beds show up in your
 station's own `<characters>`. They are hidden by default and left out of bulk
 actions; the selector shows the count separately ("15 + 8 visitors").
+
+### Creating a crew member
+
+"+ New crew member" in the Crew tab adds someone to the ship in focus. You give
+a first and last name (leave them blank for a random one drawn from the names
+already in your save), a value for the four attributes and a starting skill
+level.
+
+The new sheet is a copy of someone already aboard, with everything individual
+replaced. That is deliberate: a character node has eleven required sub-trees,
+and one missing piece surfaces only as a save the game refuses to load. Copying
+from the same ship is also what guarantees a usable position — the coordinates
+belong to that ship's grid, and someone placed outside it would be stuck.
+
+What gets replaced: a fresh `entId` reserved from `masterData/@idCounter`, the
+same counter the game allocates from; new name and appearance; no traits, no
+conditions, no relationships, no equipment and no augmentations (gear carries
+its own entity ids, and cloning it would duplicate them); work priorities all
+at Normal; needs full. Health goes to 100 and suit oxygen to 0 rather than
+following the template, since the newcomer has neither the implants nor the
+suit that earned those numbers.
+
+Because the copy comes from the crew aboard, this only works on ships that
+already have someone on them.
 
 ## Before you edit
 

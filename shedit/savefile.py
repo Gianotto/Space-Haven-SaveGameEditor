@@ -271,6 +271,22 @@ class SaveFile:
         for doc in self.docs.values():
             yield from doc.root.iter()
 
+    def next_entity_id(self) -> str:
+        """Reserva um id de entidade novo, do mesmo contador que o jogo usa.
+
+        Toda entidade do save — personagem, item, objeto — tem um `entId`
+        tirado de `masterData/@idCounter`, que guarda o proximo id livre.
+        Reservar dali (e avancar o contador) e o que garante que nada criado
+        aqui colida com o que o jogo criar depois.
+        """
+        master = self.main.find("masterData")
+        current = master.get("idCounter") if master is not None else None
+        if current is None or not str(current).isdigit():
+            raise SaveError("este save não tem masterData/@idCounter")
+        master.set("idCounter", str(int(current) + 1))
+        self.docs[MAIN_DOC].dirty = True
+        return str(current)
+
     # -- edicao ------------------------------------------------------------
 
     def apply(self, ops: list) -> int:

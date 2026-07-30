@@ -203,10 +203,17 @@ RENDER.crew = (d) => {
   // padrão a lista mostra só quem é da nave.
   const showVisitors = state.filter.crewVisitors === true;
   const shown = ship.characters.filter(c => showVisitors || c.side === ship.mainSide);
-  if (!shown.length) return h('div', { class: 'empty' }, T('crew.emptyShip'));
 
-  if (!shown.some(c => c.path === state.sel.crew)) state.sel.crew = shown[0].path;
-  const current = shown.find(c => c.path === state.sel.crew);
+  // O formulário de novo tripulante fica acima da ficha, e continua acessível
+  // mesmo quando o filtro não deixou ninguém à vista.
+  const detail = h('div', {}, state.filter.crewNew ? newCrewCard(ship) : null);
+  if (!shown.length) {
+    detail.append(h('div', { class: 'empty' }, T('crew.emptyShip')));
+  } else {
+    if (!shown.some(c => c.path === state.sel.crew)) state.sel.crew = shown[0].path;
+    const current = shown.find(c => c.path === state.sel.crew);
+    if (current) detail.append(crewDetail(current, d));
+  }
 
   const list = h('div', { class: 'list pinned' },
     h('div', { class: 'group' }, ship.ship,
@@ -221,8 +228,46 @@ RENDER.crew = (d) => {
 
   setToolbar(crewToolbar(d, ship));
 
-  return h('div', { class: 'split' }, list, current ? crewDetail(current, d) : h('div'));
+  return h('div', { class: 'split' }, list, detail);
 };
+
+/** Formulário de criação. O backend copia a ficha de quem já está na nave, então
+    ele só precisa do que é individual — o resto se ajusta na ficha depois. */
+function newCrewCard(ship) {
+  const first = h('input', { placeholder: T('crew.newRandom'), style: 'width:150px' });
+  const last = h('input', { placeholder: T('crew.newRandom'), style: 'width:150px' });
+  const points = h('input', { type: 'number', value: '5', min: '1', max: '10', style: 'width:70px' });
+  const skill = h('input', { type: 'number', value: '3', min: '0', max: '8', style: 'width:70px' });
+
+  const create = async () => {
+    const res = await action('crew.add', {
+      shipPath: ship.path,
+      name: first.value, lname: last.value,
+      side: ship.mainSide || null,
+      attributePoints: Number(points.value),
+      skillLevel: Number(skill.value),
+    }, { refresh: false });
+    if (!res) return;
+    state.sel.crew = res.path;       // já abre a ficha de quem acabou de entrar
+    state.filter.crewNew = false;
+    await loadTab('crew', { keepScroll: true });
+    toast(T('crew.newDone', { name: res.name, ship: ship.ship }), 'ok');
+  };
+
+  return h('section', { class: 'card' },
+    h('h2', {}, T('crew.newTitle')),
+    h('p', { class: 'hint' }, T('crew.newHint')),
+    h('div', { class: 'row' },
+      T('crew.firstName'), first, T('crew.lastName'), last,
+      h('span', { class: 'spacer' }),
+      T('crew.newAttrPoints'), points, T('crew.newSkillLevel'), skill),
+    h('div', { class: 'row', style: 'margin-top:10px' },
+      h('button', { class: 'btn primary', onclick: create }, T('crew.newCreate')),
+      h('button', {
+        class: 'btn',
+        onclick: () => { state.filter.crewNew = false; render(); },
+      }, T('crew.newCancel'))));
+}
 
 function crewToolbar(d, ship) {
   const showVisitors = state.filter.crewVisitors === true;
@@ -265,7 +310,14 @@ function crewToolbar(d, ship) {
       h('button', { class: 'btn', onclick: () => action('crew.clearConditions', target()) }, T('crew.clearConditions')),
       h('button', { class: 'btn', onclick: () => action('crew.raiseSkillCaps', { ...target(), cap: 8 }) }, T('crew.skillCaps')),
       h('button', { class: 'btn', onclick: () => action('crew.maxSkills', { ...target(), level: 8, onlyWithinMax: false }) }, T('crew.maxSkills')),
-      h('button', { class: 'btn', onclick: () => action('crew.maxAttributes', { ...target(), points: 10 }) }, T('crew.maxAttributes'))));
+      h('button', { class: 'btn', onclick: () => action('crew.maxAttributes', { ...target(), points: 10 }) }, T('crew.maxAttributes')),
+      h('span', { class: 'spacer' }),
+      // Criar tripulante depende de copiar alguém de bordo, o que só existe
+      // numa nave — as crafts soltas ficam de fora.
+      ship.isCraft ? null : h('button', {
+        class: 'btn' + (state.filter.crewNew ? ' primary' : ''),
+        onclick: () => { state.filter.crewNew = !state.filter.crewNew; renderInPlace(); },
+      }, T('crew.newOpen'))));
 }
 
 function crewDetail(c, d) {

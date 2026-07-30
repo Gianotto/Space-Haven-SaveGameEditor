@@ -66,7 +66,7 @@ Nenhum outro material do jogo é redistribuído.
 | Aba | O que dá para mudar |
 |---|---|
 | **Jogo** | relógio (dias/horas/turnos), créditos, seed, facção do jogador, dificuldade e as regras do cenário (monstros, robôs, erupções solares, asteroides…) |
-| **Tripulação** | nome, necessidades (saúde, comida, energia, conforto, humor…), atributos, perícias com nível/teto/exp, traços, condições e prioridades de trabalho. A lista mostra uma nave por vez — a do jogador por padrão — e fica fixa ao rolar. Inclui quem está pilotando um minerador, construtor ou caça; visitantes de outras facções ficam escondidos até você pedir |
+| **Tripulação** | nome, necessidades (saúde, comida, energia, conforto, humor…), atributos, perícias com nível/teto/exp, traços, condições e prioridades de trabalho, além de criar um tripulante novo na nave selecionada. A lista mostra uma nave por vez — a do jogador por padrão — e fica fixa ao rolar. Inclui quem está pilotando um minerador, construtor ou caça; visitantes de outras facções ficam escondidos até você pedir |
 | **Armazenamento** | totais por recurso e por nave, quantidade de cada pilha, adicionar um recurso novo a um armazém, ou criar um de cada de uma vez |
 | **Pesquisa** | estado de cada tecnologia; concluir ou zerar uma ou todas |
 | **Naves** | nome, ID, névoa de guerra |
@@ -185,6 +185,30 @@ nave-mãe. O editor junta os dois, marcando onde a pessoa está.
 Naves também recebem visitas — mercadores usando as camas médicas aparecem no
 mesmo `<characters>` da sua estação. Eles ficam escondidos por padrão e fora das
 ações em lote; o seletor mostra a contagem separada ("15 + 8 visitantes").
+
+### Criando um tripulante
+
+"+ Novo tripulante", na aba Tripulação, acrescenta alguém à nave em foco. Você
+informa nome e sobrenome (em branco, sorteia um dos nomes que já existem no seu
+save), um valor para os quatro atributos e o nível inicial das perícias.
+
+A ficha nova é uma cópia de quem já está a bordo, com tudo o que é individual
+trocado. Isso é de propósito: um personagem tem onze sub-árvores obrigatórias, e
+uma peça faltando só aparece na forma de um save que o jogo se recusa a
+carregar. Copiar de dentro da mesma nave também é o que garante uma posição
+utilizável — as coordenadas são da grade daquela nave, e alguém colocado fora
+dela ficaria preso.
+
+O que é trocado: um `entId` novo, reservado de `masterData/@idCounter` — o mesmo
+contador de onde o jogo tira os dele; nome e aparência novos; nenhum traço,
+condição, relacionamento, equipamento ou aumento (equipamento tem entId próprio,
+e clonar duplicaria esses ids); prioridades de trabalho todas em Normal;
+necessidades no máximo. Saúde vai a 100 e o oxigênio do traje a 0 em vez de
+seguir o modelo, já que o recém-chegado não tem nem os implantes nem o traje que
+justificavam aqueles números.
+
+Como a cópia sai da tripulação de bordo, isso só funciona em naves que já tenham
+alguém.
 
 ## Antes de editar
 

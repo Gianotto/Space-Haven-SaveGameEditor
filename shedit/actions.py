@@ -6,10 +6,12 @@ para ser gravada por `SaveFile.save`.
 
 from __future__ import annotations
 
+import copy
+import random
 import xml.etree.ElementTree as ET
 
 from .gamedata import GAMEDATA as GD
-from .savefile import SaveFile, SaveError, _insert_child
+from .savefile import SaveFile, SaveError, _insert_child, _remove_child
 from .views import (FULL_MEAL, RACK_HOLDERS, crew_of_ship, energy_cap,
                     need_node)
 
@@ -124,51 +126,61 @@ def _characters(sf: SaveFile, params: dict):
                 yield c
 
 
+def _restore_one(c, clear_conditions: bool = False) -> tuple:
+    """Devolve as necessidades de um personagem ao melhor estado.
+
+    Retorna (quantas alteracoes, se mexeu na estrutura da arvore).
+    """
+    changed, structural = 0, False
+    props = c.find("props")
+    if props is None:
+        return changed, structural
+    for tag, ref, target in _RESTORE_GOOD:
+        prop = props.find(tag)
+        if prop is None:
+            continue
+        node, attr = need_node(prop, ref)
+        if node is None or node.get(attr) is None:
+            continue
+        if target == "energy":
+            target = energy_cap(c)
+        if (tag, attr) in _RESTORE_KEEP_HIGHER and _num(node.get(attr)) >= target:
+            continue
+        if node.get(attr) != str(target):
+            node.set(attr, str(target))
+            changed += 1
+    for tag in _RESTORE_ZERO:
+        prop = props.find(tag)
+        if prop is not None and prop.get("v") not in (None, "0"):
+            prop.set("v", "0")
+            changed += 1
+    # A barra de comida vem do conteúdo do estômago, não dos números do
+    # <Food>: enche com uma ração e tira as toxinas.
+    belly = props.find("Food/belly")
+    if belly is not None:
+        for key, value in FULL_MEAL.items():
+            if belly.get(key) is not None and belly.get(key) != value:
+                belly.set(key, value)
+                changed += 1
+    # Condicoes negativas tambem seguram o personagem.
+    conditions = c.find("pers/conditions")
+    if conditions is not None and clear_conditions:
+        for cond in list(conditions.findall("c")):
+            if cond.get("id") not in (None, "0"):
+                conditions.remove(cond)
+                changed += 1
+                structural = True
+    return changed, structural
+
+
 def act_restore(sf: SaveFile, params: dict) -> dict:
     changed, touched, structural = 0, set(), False
     for c in _characters(sf, params):
-        props = c.find("props")
-        if props is None:
-            continue
-        for tag, ref, target in _RESTORE_GOOD:
-            prop = props.find(tag)
-            if prop is None:
-                continue
-            node, attr = need_node(prop, ref)
-            if node is None or node.get(attr) is None:
-                continue
-            if target == "energy":
-                target = energy_cap(c)
-            if (tag, attr) in _RESTORE_KEEP_HIGHER and _num(node.get(attr)) >= target:
-                continue
-            if node.get(attr) != str(target):
-                node.set(attr, str(target))
-                changed += 1
-                touched.add(c)
-        for tag in _RESTORE_ZERO:
-            prop = props.find(tag)
-            if prop is not None and prop.get("v") not in (None, "0"):
-                prop.set("v", "0")
-                changed += 1
-                touched.add(c)
-        # A barra de comida vem do conteúdo do estômago, não dos números do
-        # <Food>: enche com uma ração e tira as toxinas.
-        belly = props.find("Food/belly")
-        if belly is not None:
-            for key, value in FULL_MEAL.items():
-                if belly.get(key) is not None and belly.get(key) != value:
-                    belly.set(key, value)
-                    changed += 1
-                    touched.add(c)
-        # Condicoes negativas tambem seguram o personagem.
-        conditions = c.find("pers/conditions")
-        if conditions is not None and params.get("clearConditions"):
-            for cond in list(conditions.findall("c")):
-                if cond.get("id") not in (None, "0"):
-                    touched.add(c)
-                    conditions.remove(cond)
-                    changed += 1
-                    structural = True
+        n, struct = _restore_one(c, params.get("clearConditions"))
+        if n:
+            touched.add(c)
+        changed += n
+        structural = structural or struct
     return _finish(sf, changed, touched, structural)
 
 
@@ -257,6 +269,182 @@ def act_clear_conditions(sf: SaveFile, params: dict) -> dict:
                 conditions.remove(cond)
                 changed += 1
     return _finish(sf, changed, touched, structural=bool(changed))
+
+
+# --------------------------------------------------------------------------
+# Novo tripulante
+# --------------------------------------------------------------------------
+
+# Criar alguem do zero exigiria reproduzir de memoria uma ficha inteira —
+# <props>, <ai>, <pers> com onze sub-nos, <colors>, <inv> — e qualquer peca
+# faltando so apareceria como um save que o jogo recusa a carregar. Em vez
+# disso, copiamos um tripulante que ja esta na nave e trocamos o que e
+# individual. O alvo dessa limpeza e a forma mais enxuta que aparece no proprio
+# save (personagens sem trabalho, equipamento ou historico), o que mantem tudo
+# dentro do que o jogo grava.
+#
+# `<ai>` no seu estado minimo: sem trabalho em curso, sem objeto reservado, so
+# a nave de origem. Os demais atributos (`inobj`, `rest`, `hobid`...) apontam
+# para objetos especificos e nao podem ser herdados de outra pessoa.
+_AI_IDLE = {"bts": "0", "suitOn": "0", "bstx": "-1", "bsty": "-1", "bstsh": "0"}
+# So existem em situacoes especificas (dentro de uma cama medica, fora da nave)
+# e nao fazem sentido em alguem recem-criado.
+_DROP_CHAR_ATTRS = ("is", "outside", "oside", "owside", "mbsbp")
+# Aparencia: vem toda de um mesmo doador, para as combinacoes continuarem
+# coerentes em vez de sortear cada peca por conta propria.
+_LOOK_ATTRS = ("bb", "bs", "bh", "bp", "orgColor", "colorSet")
+# Equipamento e implantes tem entId proprio: clonar duplicaria esses ids, entao
+# o novo tripulante nasce sem nada.
+_DROP_CHAR_NODES = ("loadout", "aug", "npc")
+
+
+def _all_characters(sf: SaveFile) -> list:
+    out = []
+    for _doc, ship in sf.ships():
+        chars = ship.find("characters")
+        out += chars.findall("c") if chars is not None else []
+    for _doc, craft in sf.crafts():
+        chars = craft.find("characters")
+        out += chars.findall("c") if chars is not None else []
+    return out
+
+
+def _clear(parent, tag: str | None = None):
+    """Esvazia um no, preservando a indentacao dos irmaos."""
+    if parent is None:
+        return
+    for child in list(parent):
+        if tag is None or child.tag == tag:
+            _remove_child(parent, child)
+
+
+def act_add_crew(sf: SaveFile, params: dict) -> dict:
+    """Cria um tripulante novo na nave indicada.
+
+    A ficha e uma copia de quem ja esta a bordo, com identidade, historico,
+    equipamento e trabalho zerados. Copiar de dentro da propria nave e o que
+    garante uma posicao valida: as coordenadas do personagem sao da grade
+    daquela nave, e um tripulante colocado fora dela ficaria preso.
+    """
+    ship = sf.get(params["shipPath"])
+    if ship.tag != "ship":
+        raise SaveError("selecione uma nave — só dá para criar tripulante a bordo de uma")
+    chars = ship.find("characters")
+    pool = chars.findall("c") if chars is not None else []
+    if not pool:
+        raise SaveError(
+            "esta nave não tem nenhum tripulante para servir de modelo; "
+            "crie o primeiro numa nave que já tenha tripulação"
+        )
+
+    side = params.get("side") or None
+    template = next((c for c in pool if side is None or c.get("side") == side), pool[0])
+    new = copy.deepcopy(template)
+
+    # -- identidade --------------------------------------------------------
+    for attr in _DROP_CHAR_ATTRS:
+        new.attrib.pop(attr, None)
+    new.set("entId", sf.next_entity_id())
+    new.set("task", "Walk")
+    if side:
+        new.set("side", side)
+    everyone = _all_characters(sf)
+    first = [c.get("name") for c in everyone if c.get("name")]
+    last = [c.get("lname") for c in everyone if c.get("lname")]
+    # Sem nome digitado, sorteia um dos que ja existem no save: sao nomes que o
+    # proprio jogo gerou, entao nao ha risco de caractere que ele nao aceite.
+    new.set("name", (params.get("name") or "").strip()
+            or (random.choice(first) if first else "Crew"))
+    new.set("lname", (params.get("lname") or "").strip()
+            or (random.choice(last) if last else ""))
+
+    # -- aparencia ---------------------------------------------------------
+    same_species = [c for c in everyone if c.get("cid") == new.get("cid")] or [template]
+    donor = random.choice(same_species)
+    for attr in _LOOK_ATTRS:
+        if donor.get(attr) is not None:
+            new.set(attr, donor.get(attr))
+    look, donor_look = new.find("colors"), donor.find("colors")
+    if look is not None and donor_look is not None:
+        look.attrib.clear()
+        look.attrib.update(donor_look.attrib)
+
+    # -- estado: sem trabalho, sem equipamento -----------------------------
+    ai = new.find("ai")
+    if ai is not None:
+        ai.attrib.clear()
+        ai.attrib.update(_AI_IDLE)
+        if ship.get("sid"):
+            ai.set("hsid", ship.get("sid"))
+        for child in list(ai):
+            if child.tag != "combatAI":
+                _remove_child(ai, child)
+    _clear(new.find("inv"))
+    for tag in _DROP_CHAR_NODES:
+        node = new.find(tag)
+        if node is not None:
+            _remove_child(new, node)
+
+    # -- ficha pessoal -----------------------------------------------------
+    pers = new.find("pers")
+    if pers is not None:
+        points = str(max(1, min(10, int(params.get("attributePoints", 5)))))
+        for a in pers.findall("attr/a"):
+            a.set("points", points)
+
+        _clear(pers.find("traits"))
+        # Os <c id="0"> sao encaixes vazios que o jogo mantem reservados; so as
+        # condicoes de verdade saem.
+        conditions = pers.find("conditions")
+        if conditions is not None:
+            for cond in list(conditions.findall("c")):
+                if cond.get("id") not in (None, "0"):
+                    _remove_child(conditions, cond)
+        _clear(pers.find("sociality/relationships"))
+        for n in pers.findall("needs/ns/*"):
+            n.set("n", "0")
+            n.set("cv", "0")
+        _clear(pers.find("needs/factors"))
+        _clear(pers.find("prefs"))
+        for j in pers.findall("jobsetting/j"):
+            j.set("priority", "Normal")
+
+        level = str(max(0, min(8, int(params.get("skillLevel", 3)))))
+        cap = str(max(int(level), min(8, int(params.get("skillCap", 8)))))
+        for s in pers.findall("skills/s"):
+            # As pericias ocultas ficam zeradas, como no resto do save.
+            if not GD.skill(s.get("sk")).get("show", True):
+                continue
+            s.set("level", level)
+            s.set("mxn", cap)
+            s.set("exp", "0")
+            s.set("expd", "0")
+
+    _restore_one(new)
+    # Restaurar nunca reduz saúde nem energia, para não desfazer um aumento —
+    # mas quem acabou de nascer não tem nenhum: o modelo pode estar com 260 de
+    # saúde por causa de implantes que não foram copiados. O mesmo vale para a
+    # reserva de oxigênio, que é do traje, e ele veio sem equipamento.
+    props = new.find("props")
+    if props is not None:
+        health = props.find("Health")
+        if health is not None:
+            for attr in ("v", "ltv"):
+                if health.get(attr) is not None:
+                    health.set(attr, "100")
+        oxygen = props.find("Oxygen")
+        if oxygen is not None and oxygen.get("oxs") is not None:
+            oxygen.set("oxs", "0")
+
+    _insert_child(chars, new)
+    sf.mark_dirty(ship)
+    sf.reindex()
+    return {
+        "changed": 1,
+        "path": sf.path_of(new),
+        "entId": new.get("entId"),
+        "name": f"{new.get('name')} {new.get('lname')}".strip(),
+    }
 
 
 def act_set_all_jobs(sf: SaveFile, params: dict) -> dict:
@@ -480,6 +668,7 @@ _HANDLERS = {
     "crew.addTrait": act_add_trait,
     "crew.clearConditions": act_clear_conditions,
     "crew.setAllJobs": act_set_all_jobs,
+    "crew.add": act_add_crew,
     "storage.setStacks": act_set_stacks,
     "storage.fillAll": act_fill_all,
     "storage.addStack": act_add_stack,
