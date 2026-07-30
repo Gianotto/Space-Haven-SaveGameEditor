@@ -24,19 +24,14 @@ Bugbyte e não tem qualquer vínculo com ela.
 O arquivo `shedit/data/gamedata.json` contém nomes e descrições extraídos dos
 arquivos do jogo. **Esse conteúdo é propriedade da Bugbyte Ltd.**, e está aqui
 apenas para o editor mostrar nomes legíveis no lugar dos IDs numéricos do save.
-Nenhum outro material do jogo é redistribuído. A pedido da Bugbyte, o arquivo
-será removido — o editor continua funcionando com
-`tools/extract_gamedata.py`, que gera a tabela a partir da sua própria cópia do
-jogo.
+Nenhum outro material do jogo é redistribuído.
 
 > **Disclaimer** — *Space Haven* is a game by Bugbyte Ltd. This editor is an
 > unofficial, fan-made project with no affiliation to or endorsement from
 > Bugbyte. The file `shedit/data/gamedata.json` contains names and descriptions
 > extracted from the game's data files; **that content belongs to Bugbyte Ltd.**
 > and is included solely so the editor can display readable names instead of the
-> numeric IDs stored in savegames. It will be removed on request by Bugbyte;
-> `tools/extract_gamedata.py` regenerates the table from your own copy of the
-> game.
+> numeric IDs stored in savegames. No other game material is redistributed.
 
 ## Abas
 
