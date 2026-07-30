@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# PyInstaller
+build/
+dist/
+
+# Backups que o editor cria ao gravar um save
+*.bak-*
+
+# Savegames pessoais deixados na pasta do projeto
+savegame.md
+save/

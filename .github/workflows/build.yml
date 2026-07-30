@@ -1,0 +1,76 @@
+name: build
+
+# Gera o executável para Windows e Linux. O PyInstaller não faz cross-compile,
+# então cada sistema é montado na própria máquina do runner.
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: ${{ matrix.label }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            label: linux
+            binary: dist/SpaceHavenEditor
+            artifact: SpaceHavenEditor-linux
+          - os: windows-latest
+            label: windows
+            binary: dist/SpaceHavenEditor.exe
+            artifact: SpaceHavenEditor-windows
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalar PyInstaller
+        run: python -m pip install --upgrade pip pyinstaller
+
+      - name: Empacotar
+        run: pyinstaller --clean --noconfirm SpaceHavenEditor.spec
+
+      # Confere que o binário sobe e que os dados foram embutidos — sem isto,
+      # um empacotamento sem os JSON passaria despercebido até alguém baixar.
+      - name: Teste de fumaça
+        run: python tools/smoke_test.py ${{ matrix.binary }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: ${{ matrix.binary }}
+          if-no-files-found: error
+
+  release:
+    name: Publicar release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Renomear por sistema
+        run: |
+          mkdir -p release
+          cp artifacts/SpaceHavenEditor-linux/SpaceHavenEditor   release/SpaceHavenEditor-linux
+          cp artifacts/SpaceHavenEditor-windows/SpaceHavenEditor.exe release/SpaceHavenEditor-windows.exe
+          chmod +x release/SpaceHavenEditor-linux
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: release/*
+          generate_release_notes: true

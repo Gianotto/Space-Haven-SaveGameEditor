@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Space Haven — Savegame Editor</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header>
+    <div class="brand">SPACE HAVEN<small data-i18n="app.title"></small></div>
+    <div id="filePath"></div>
+    <div class="status" id="status"></div>
+    <select id="langPicker" title="Idioma / Language"></select>
+    <button class="btn" id="btnOpen" data-i18n="app.open"></button>
+    <button class="btn" id="btnReload" data-i18n="app.reload" data-i18n-title="app.reloadHint"></button>
+    <button class="btn primary" id="btnSave" data-i18n="app.save"></button>
+  </header>
+
+  <nav id="tabs"></nav>
+  <div id="toolbar" hidden></div>
+  <main><div class="wrap" id="view"></div></main>
+
+  <div id="toast"></div>
+
+  <dialog id="fileDialog">
+    <div class="head" data-i18n="dialog.openTitle"></div>
+    <div class="body">
+      <div class="row" style="margin-bottom:10px">
+        <input id="fileInput" style="flex:1" data-i18n-placeholder="dialog.pathPlaceholder">
+        <button class="btn" id="fileGo" data-i18n="dialog.go"></button>
+      </div>
+      <div class="crumbs" id="fileCrumb"></div>
+      <div class="list" id="fileList" style="max-height:340px"></div>
+    </div>
+    <div class="foot">
+      <button class="btn" id="fileCancel" data-i18n="dialog.cancel"></button>
+    </div>
+  </dialog>
+
+  <script src="/app.js"></script>
+</body>
+</html>
