@@ -14,3 +14,6 @@ dist/
 # Savegames pessoais deixados na pasta do projeto
 savegame.md
 save/
+
+# Rascunhos de divulgação (não fazem parte do projeto)
+divulgacao/
