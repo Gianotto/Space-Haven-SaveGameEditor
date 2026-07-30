@@ -70,7 +70,34 @@ jobs:
           cp artifacts/SpaceHavenEditor-windows/SpaceHavenEditor.exe release/SpaceHavenEditor-windows.exe
           chmod +x release/SpaceHavenEditor-linux
 
+      # Os binarios nao sao assinados: o SmartScreen e alguns antivirus reclamam.
+      # O SHA256 publicado deixa quem baixou conferir que o arquivo e este mesmo.
+      - name: Somas SHA256
+        working-directory: release
+        run: |
+          sha256sum SpaceHavenEditor-linux SpaceHavenEditor-windows.exe > SHA256SUMS
+          cat SHA256SUMS
+
       - uses: softprops/action-gh-release@v2
         with:
           files: release/*
           generate_release_notes: true
+          body: |
+            ## Download
+
+            | Sistema / System | Arquivo / File |
+            |---|---|
+            | Windows | `SpaceHavenEditor-windows.exe` |
+            | Linux | `SpaceHavenEditor-linux` (`chmod +x` antes de rodar) |
+
+            Os binários não são assinados — o SmartScreen avisa na primeira
+            execução (*More info → Run anyway*). Confira o download com o
+            `SHA256SUMS` anexado:
+
+            ```
+            sha256sum -c SHA256SUMS                                    # Linux
+            certutil -hashfile SpaceHavenEditor-windows.exe SHA256      # Windows
+            ```
+
+            Prefere não rodar binário? O projeto é só biblioteca padrão do
+            Python: `python3 run.py`.
