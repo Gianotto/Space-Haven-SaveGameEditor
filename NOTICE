@@ -1,0 +1,16 @@
+Space Haven Savegame Editor
+Copyright (c) 2026 Victor Gianotto
+
+The MIT License in the LICENSE file covers the source code of this editor only.
+
+*Space Haven* is a game by Bugbyte Ltd. (https://bugbyte.fi/). This project is
+unofficial, is not endorsed by Bugbyte, and has no affiliation with them.
+
+The file `shedit/data/gamedata.json` contains names and descriptions extracted
+from the game's own data files. That content is the property of Bugbyte Ltd.,
+is not covered by the MIT License, and is included solely so the editor can
+display readable names instead of the numeric IDs stored in savegames. No other
+game material is redistributed.
+
+The file can be regenerated from your own copy of the game with
+`tools/extract_gamedata.py`.

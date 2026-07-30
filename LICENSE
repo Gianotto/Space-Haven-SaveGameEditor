@@ -19,14 +19,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
----
-
-The MIT License above covers the source code of this editor only.
-
-*Space Haven* is a game by Bugbyte Ltd. This project is unofficial and has no
-affiliation with Bugbyte. The file `shedit/data/gamedata.json` contains names
-and descriptions extracted from the game's own data files; that content is the
-property of Bugbyte Ltd., is not covered by this license, and is included
-solely so the editor can display readable names instead of the numeric IDs
-stored in savegames.

@@ -266,5 +266,5 @@ SpaceHavenEditor.spec        PyInstaller recipe
 ## License
 
 [MIT](LICENSE) for the editor's source code. The game data in
-`shedit/data/gamedata.json` belongs to Bugbyte Ltd. — see the
-[disclaimer](#disclaimer).
+`shedit/data/gamedata.json` belongs to Bugbyte Ltd. and is not covered by it —
+see [NOTICE](NOTICE) and the [disclaimer](#disclaimer).
