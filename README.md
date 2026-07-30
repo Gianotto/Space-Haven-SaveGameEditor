@@ -15,6 +15,29 @@ python3 run.py caminho/do/save    # abre um save direto
 A interface roda no navegador (`http://127.0.0.1:8713`), mas quem lê e grava os
 arquivos é o processo Python, na sua máquina. Nada sai do computador.
 
+## Aviso legal
+
+**Space Haven** é um jogo da [Bugbyte Ltd.](https://bugbyte.fi/) Este editor é
+um projeto independente feito por fãs: não é oficial, não é endossado pela
+Bugbyte e não tem qualquer vínculo com ela.
+
+O arquivo `shedit/data/gamedata.json` contém nomes e descrições extraídos dos
+arquivos do jogo. **Esse conteúdo é propriedade da Bugbyte Ltd.**, e está aqui
+apenas para o editor mostrar nomes legíveis no lugar dos IDs numéricos do save.
+Nenhum outro material do jogo é redistribuído. A pedido da Bugbyte, o arquivo
+será removido — o editor continua funcionando com
+`tools/extract_gamedata.py`, que gera a tabela a partir da sua própria cópia do
+jogo.
+
+> **Disclaimer** — *Space Haven* is a game by Bugbyte Ltd. This editor is an
+> unofficial, fan-made project with no affiliation to or endorsement from
+> Bugbyte. The file `shedit/data/gamedata.json` contains names and descriptions
+> extracted from the game's data files; **that content belongs to Bugbyte Ltd.**
+> and is included solely so the editor can display readable names instead of the
+> numeric IDs stored in savegames. It will be removed on request by Bugbyte;
+> `tools/extract_gamedata.py` regenerates the table from your own copy of the
+> game.
+
 ## Abas
 
 | Aba | O que dá para mudar |
@@ -89,6 +112,9 @@ O extrator lê os textos e as definições de `library/texts` e `library/haven`,
 os enums internos (perícias, profissões, prioridades) por reflexão, usando o
 `jjs` do JRE que vem junto com o jogo — assim as tabelas são as do jogo, não
 uma lista mantida à mão.
+
+O conteúdo dessa tabela (887 nomes e 811 descrições, em EN e PT-BR) é do jogo e
+pertence à Bugbyte Ltd. — veja o [aviso legal](#aviso-legal).
 
 ## Onde ficam os saves
 
