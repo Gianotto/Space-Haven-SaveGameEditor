@@ -293,6 +293,8 @@ SpaceHavenEditor.spec        receita do PyInstaller
 
 - [Anatomia do savegame](docs/savegame-format.md) — como o save é organizado, o que a seed reproduz, e o que dá e o que não dá para mudar de fora.
 
+- [Servidor de galáxia compartilhada](docs/shared-galaxy-server.md) — projeto de um servidor que permite vários jogadores dividirem a mesma galáxia, só lendo e gravando savegame.
+
 ## Licença
 
 [MIT](LICENSE) para o código do editor. Os dados do jogo em

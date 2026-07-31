@@ -292,6 +292,8 @@ SpaceHavenEditor.spec        PyInstaller recipe
 
 - [Savegame anatomy](docs/savegame-format.md) — how the save is organised, what the seed reproduces, what can and cannot be changed from outside. Written in Portuguese.
 
+- [Shared galaxy server](docs/shared-galaxy-server.md) — design notes for a server that lets several players share one galaxy, built entirely on savegame reading and writing. Written in Portuguese.
+
 ## License
 
 [MIT](LICENSE) for the editor's source code. The game data in
