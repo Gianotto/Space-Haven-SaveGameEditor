@@ -233,20 +233,58 @@ Não precisa de Python nem de instalação.
   avisa que o programa é desconhecido: *Mais informações → Executar assim mesmo*.
 - **Linux** — `SpaceHavenEditor-linux`; dê `chmod +x` antes de rodar.
 
-Os binários não são assinados, então o Windows e alguns antivírus reclamam — é
-o normal para saída de PyInstaller. Toda release traz um `SHA256SUMS` para
-conferir o que você baixou:
+A janela de console que abre junto é onde aparece o endereço do editor, e
+fechá-la (ou Ctrl+C) encerra o servidor.
+
+## Desconfiar de mim é o instinto certo
+
+Ninguém deveria rodar um programa de um estranho só porque o README é simpático.
+Então, em vez de pedir confiança, aqui está como conferir.
+
+**Rode do código.** Esta é a opção principal, não o plano B. O editor inteiro é
+biblioteca padrão do Python — nenhuma dependência para auditar, nada baixado em
+tempo de execução. Leia e rode:
+
+```bash
+git clone https://github.com/Gianotto/Space-Haven-SaveGameEditor
+cd Space-Haven-SaveGameEditor
+python3 run.py
+```
+
+**Os binários são montados em público, a partir de código público.** Nada é
+compilado na minha máquina. Cada release é produzida pelo GitHub Actions a
+partir do commit da tag, seguindo o
+[`.github/workflows/build.yml`](.github/workflows/build.yml), e o log da
+montagem fica público na aba Actions do repositório. Dá para ler a receita, ler
+o código de onde saiu, e ler o registro de tudo acontecendo.
+
+**Confira o que você baixou.** Toda release traz um `SHA256SUMS`:
 
 ```bash
 sha256sum -c SHA256SUMS            # Linux
 certutil -hashfile SpaceHavenEditor-windows.exe SHA256    # Windows
 ```
 
-Se preferir não rodar binário de estranho, o projeto inteiro é biblioteca
-padrão do Python — leia o código e rode `python3 run.py` do fonte.
+Os binários **não são assinados**, então o SmartScreen do Windows e alguns
+antivírus vão reclamar. É o normal para saída de PyInstaller e não adianta eu
+fingir o contrário; certificado de assinatura custa dinheiro que este projeto
+não tem. Se isso for impeditivo, rode do código — é o mesmo programa.
 
-A janela de console que abre junto é onde aparece o endereço do editor, e
-fechá-la (ou Ctrl+C) encerra o servidor.
+## O que este programa faz na sua máquina
+
+- Lê e grava **apenas arquivos de savegame**. Nunca encosta na instalação do
+  jogo: nem no `spacehaven.jar`, nem no `config.json`, sem mod loader, sem
+  registro do Windows, sem inicialização automática.
+- Todo arquivo que ele reescreve ganha antes um backup ao lado, com data e hora
+  no nome (`.bak-AAAAMMDD-HHMMSS`).
+- Ele escuta em `127.0.0.1` para o seu navegador mostrar a interface. **Nada sai
+  do seu computador.** Funciona com a internet desligada e não faz conexão
+  nenhuma para fora — sem telemetria, sem checagem de atualização, sem
+  estatística.
+
+Se alguma versão futura passar a enviar qualquer coisa para algum lugar, isso
+vai estar dito aqui, em português claro, e vai ser algo que você liga, não algo
+que você precisa desligar.
 
 ### Empacotando você mesmo
 

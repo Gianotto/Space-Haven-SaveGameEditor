@@ -231,20 +231,56 @@ system and run it. No Python, no install.
   warns that the program is unknown: *More info → Run anyway*.
 - **Linux** — `SpaceHavenEditor-linux`; `chmod +x` it before running.
 
-The binaries are not code-signed, so Windows and some antivirus tools will flag
-them — normal for PyInstaller output. Every release ships a `SHA256SUMS` file
-so you can check what you downloaded:
+The console window that opens alongside is where the editor's address appears;
+closing it (or Ctrl+C) shuts the server down.
+
+## Not trusting me is the right instinct
+
+You should not run a program from a stranger just because its README is
+friendly. So instead of asking for trust, here is how to check.
+
+**Run it from source.** This is the first-class option, not the fallback. The
+whole editor is Python standard library — no dependencies to audit, nothing
+downloaded at runtime. Read it and run it:
+
+```bash
+git clone https://github.com/Gianotto/Space-Haven-SaveGameEditor
+cd Space-Haven-SaveGameEditor
+python3 run.py
+```
+
+**The binaries are built in public, from public source.** Nothing is compiled on
+my machine. Every release is produced by GitHub Actions from the tagged commit,
+following [`.github/workflows/build.yml`](.github/workflows/build.yml), and the
+build log stays public under the repository's Actions tab. You can read the
+recipe, read the source it was built from, and read the log of it happening.
+
+**Check what you downloaded.** Every release ships `SHA256SUMS`:
 
 ```bash
 sha256sum -c SHA256SUMS            # Linux
 certutil -hashfile SpaceHavenEditor-windows.exe SHA256    # Windows
 ```
 
-If you'd rather not run a binary from a stranger, the whole thing is Python
-standard library — read it and run `python3 run.py` from source.
+The binaries are **not code-signed**, so Windows SmartScreen and some antivirus
+tools will flag them. That is normal for PyInstaller output and I am not going
+to pretend otherwise; signing certificates cost money this project does not
+have. If that is a dealbreaker, run from source — it is the same program.
 
-The console window that opens alongside is where the editor's address appears;
-closing it (or Ctrl+C) shuts the server down.
+## What this program does to your machine
+
+- It reads and writes **savegame files only**. It never touches the game's
+  installation: not `spacehaven.jar`, not `config.json`, no mod loaders, no
+  registry, no autostart.
+- Every file it rewrites gets a timestamped `.bak-YYYYMMDD-HHMMSS` backup next
+  to it, first.
+- It listens on `127.0.0.1` so your browser can show the interface. **Nothing
+  leaves your computer.** It works with the network unplugged, and it makes no
+  outbound connections at all — no telemetry, no update check, no analytics.
+
+If a future version ever sends anything anywhere, it will say so here, in plain
+language, and it will be something you turn on rather than something you turn
+off.
 
 ### Packaging it yourself
 

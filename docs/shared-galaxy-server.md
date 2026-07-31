@@ -477,7 +477,76 @@ Escopo do primeiro corte: **só comércio e as missões que o próprio jogo gera
 Transferir tripulação e naves inteiras é possível (verificado), mas cada uma
 traz regra de jogo própria e pode esperar.
 
-## 2.11 Suposições ainda não testadas
+## 2.11 Confiança e adoção
+
+A barreira real deste projeto não é técnica. É que a comunidade — com razão —
+não instala aplicativo desconhecido, e ainda menos um que sobe arquivos para
+algum servidor. Se isso não for resolvido de propósito, o resto não importa.
+
+### A sequência importa mais que o argumento
+
+Cada degrau pede um pouco mais de confiança que o anterior e entrega algo antes
+de pedir o próximo:
+
+1. **O editor de savegame**, que serve sozinho e não manda nada para lugar
+   nenhum. Ganha uma base de gente que já usa e já confia.
+2. **O mapa da sala como página web.** Nada para instalar: a pessoa vê o mundo
+   compartilhado vivo e decide se quer entrar. Dá para permitir participação sem
+   instalação nenhuma, com a pessoa escolhendo a pasta do save no navegador,
+   clique a clique.
+3. **O cliente**, que vira comodidade em vez de porta de entrada — e chega como
+   *uma aba a mais numa ferramenta que a pessoa já tem*, não como app novo.
+
+A diferença de conversão entre "instale este app desconhecido para jogar com
+estranhos" e "aquele editor que você já usa agora conecta numa sala" é enorme.
+
+### Verificável em vez de confiável
+
+- **Rodar do código é a opção principal.** O editor é biblioteca padrão do
+  Python; o cliente deve manter essa propriedade enquanto for possível.
+- **Build público a partir de fonte público.** O binário é montado pelo GitHub
+  Actions a partir do commit da tag, e o log fica público. A afirmação
+  checável é: *este binário saiu deste commit, e aqui está o registro*.
+  Linkar a execução nas notas da release.
+- **Checksums em toda release**, e link de análise antivírus pública.
+- **Assinatura de código** custa dinheiro e pode esperar; não substitui nada
+  acima.
+
+### O servidor precisa ser auto-hospedável
+
+É a alavanca que mais muda a conversa numa comunidade de modding. Com o servidor
+aberto e fácil de subir, ninguém precisa confiar em ninguém: um grupo de amigos
+levanta a própria sala. O autor deixa de ser um serviço a quem entregar dados e
+passa a ser autor de uma ferramenta. E vai acontecer de qualquer jeito — sempre
+aparece quem quer a sala privada.
+
+### Política de dados, escrita antes de existir
+
+O editor promete hoje que nada sai do computador. **O cliente quebra essa
+promessa**, e fingir que não seria o pior erro possível. Então, em linguagem
+clara e onde a pessoa lê antes de instalar:
+
+- o que sobe: o arquivo de save, inteiro
+- para onde
+- quem enxerga: o servidor e, em forma de retrato, os outros jogadores da sala
+- por quanto tempo fica guardado
+- como apagar tudo e sair
+
+E dentro do cliente:
+
+- **registro visível** de tudo que foi enviado e de todo arquivo escrito
+- **modo de ensaio**: mostrar o que seria alterado sem alterar
+- nunca encostar na instalação do jogo. Se o mod opcional de 2.9 existir um dia,
+  vem separado, com aviso, e nunca embutido
+
+### Franqueza sobre o que não dá para impedir
+
+Dizer abertamente que o jogo roda na máquina do jogador, que dá para editar o
+save, e que por isso o desenho é cooperativo e o servidor confere em vez de
+adivinhar. Comunidade de modding respeita isso e desconfia do contrário — quem
+promete segurança absoluta é quem não pensou no assunto.
+
+## 2.12 Suposições ainda não testadas
 
 Marcadas para quem for implementar não tomar como fato:
 
@@ -494,7 +563,7 @@ Marcadas para quem for implementar não tomar como fato:
 - **missões geradas em nave injetada.** O jogo criou uma. Não sabemos se ela se
   resolve bem, nem o que acontece se a nave sumir no meio
 
-## 2.12 Aviso legal
+## 2.13 Aviso legal
 
 Space Haven é um jogo da Bugbyte Ltd. Este é um projeto independente, feito por
 fã, sem vínculo com ela. Nada aqui altera o código do jogo: tudo é leitura e
