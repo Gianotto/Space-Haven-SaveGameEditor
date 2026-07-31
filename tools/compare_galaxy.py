@@ -126,10 +126,19 @@ def fingerprint(path: str) -> dict:
         "map": _pick(starmap, MAP_KEYS),
         "systems": systems,
         "ignored": len(volatile),
+        "named": sum(1 for s in systems if s["name"].strip()),
+    }
+    # O nome do sistema fica de fora da conta: num save recem-criado nenhum
+    # sistema tem nome, e nos jogados todos tem. Sao atribuidos depois da
+    # criacao, entao entrariam como diferenca entre o mesmo universo novo e
+    # jogado — que e justamente a comparacao que interessa.
+    skeleton = {
+        "map": fp["map"],
+        "systems": [{k: s[k] for k in ("id", "bodies", "sectors", "clouds")}
+                    for s in systems],
     }
     fp["digest"] = hashlib.sha256(
-        json.dumps({k: fp[k] for k in ("map", "systems")},
-                   sort_keys=True, ensure_ascii=False).encode("utf-8")
+        json.dumps(skeleton, sort_keys=True, ensure_ascii=False).encode("utf-8")
     ).hexdigest()[:16]
     return fp
 
@@ -156,7 +165,9 @@ def _seed_warning(fps: list) -> str | None:
 
 def _systems_line(fp: dict, show: int = 3) -> str:
     """Uma galaxia completa tem dezenas de sistemas; so os primeiros cabem."""
-    names = [s["name"] for s in fp["systems"]]
+    if not fp["named"]:
+        return "sistemas ainda sem nome (save recém-criado)"
+    names = [s["name"] for s in fp["systems"] if s["name"].strip()]
     head = ", ".join(names[:show])
     return head + (f" … e mais {len(names) - show}" if len(names) > show else "")
 
