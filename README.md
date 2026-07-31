@@ -288,6 +288,10 @@ SpaceHavenEditor.spec        PyInstaller recipe
 .github/workflows/build.yml  Windows and Linux builds + release on tag
 ```
 
+## Notes
+
+- [Savegame anatomy](docs/savegame-format.md) — how the save is organised, what the seed reproduces, what can and cannot be changed from outside. Written in Portuguese.
+
 ## License
 
 [MIT](LICENSE) for the editor's source code. The game data in
