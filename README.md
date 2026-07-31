@@ -283,6 +283,7 @@ shedit/
   web/                       interface (HTML/CSS/JS, no dependencies)
 tools/extract_gamedata.py    regenerates data/gamedata.json from the jar
 tools/smoke_test.py          checks that the packaged executable works
+tools/compare_galaxy.py      compares the generated galaxy of two or more saves
 SpaceHavenEditor.spec        PyInstaller recipe
 .github/workflows/build.yml  Windows and Linux builds + release on tag
 ```
