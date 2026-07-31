@@ -56,7 +56,11 @@ ORBIT_KEYS = ("rx", "ry", "speed")
 # para 4, de 1 para 4 e de 6 para 5 enquanto o terreno ficou parado.
 TRANSIENT_SECTORS = {"StarmapCraft", "SM_AwayMission", "SM_NewHomeSector",
                      "ExodusSupplyFleet"}
-MAP_KEYS = ("w", "h", "sys", "pa")
+# Do <starmap> so o tamanho da galaxia e parametro de geracao. `sys` e `pa` sao
+# contadores internos — nao batem com a quantidade de sistemas nem de corpos
+# (73 sistemas com sys=31, 77 com sys=6), entao entrariam na conta como ruido.
+# `objectIdCounter` e `awayMission` mudam sozinhos durante a partida.
+MAP_KEYS = ("w", "h")
 
 
 def _text(value: str | None) -> str:
@@ -150,6 +154,13 @@ def _seed_warning(fps: list) -> str | None:
     return _SEED_NOTE if all(f["seed"] in (None, "0", "") for f in fps) else None
 
 
+def _systems_line(fp: dict, show: int = 3) -> str:
+    """Uma galaxia completa tem dezenas de sistemas; so os primeiros cabem."""
+    names = [s["name"] for s in fp["systems"]]
+    head = ", ".join(names[:show])
+    return head + (f" … e mais {len(names) - show}" if len(names) > show else "")
+
+
 def _diff_sets(a: list, b: list, label: str, limit: int = 4) -> list:
     """Diferencas entre dois conjuntos de registros, ja ordenados."""
     ka, kb = {_key(x) for x in a}, {_key(x) for x in b}
@@ -170,8 +181,7 @@ def compare(fps: list, verbose: bool = False) -> bool:
     print(f"referência: {base['save']}")
     print(f"  seed={base['seed']!r} modo={base['mode']!r}")
     print(f"  {_counts(base)}")
-    for s in base["systems"]:
-        print(f"  sistema {s['id']}: {s['name']!r}")
+    print(f"  {_systems_line(base)}")
     print(f"  impressão digital: {base['digest']}\n")
 
     all_equal = True
@@ -232,10 +242,7 @@ def main() -> int:
         fp = fps[0]
         print(f"{fp['save']}\n  seed={fp['seed']!r} modo={fp['mode']!r}")
         print(f"  {_counts(fp)}")
-        for s in fp["systems"][:10]:
-            print(f"  sistema {s['id']}: {s['name']!r}")
-        if len(fp["systems"]) > 10:
-            print(f"  … e mais {len(fp['systems']) - 10} sistemas")
+        print(f"  {_systems_line(fp, show=8)}")
         print(f"  impressão digital: {fp['digest']}")
         print("\npasse dois ou mais saves para comparar.")
         warn = _seed_warning(fps)
