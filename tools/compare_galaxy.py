@@ -27,6 +27,23 @@ Como testar a reprodutibilidade da seed:
     1. Novo jogo, anote a seed, salve assim que a partida abrir.
     2. Novo jogo com a mesma seed, salve do mesmo jeito.
     3. Rode este programa nos dois saves.
+
+O que ja foi medido (jogo 1.0.4, dois jogos em modo nave, seed 1654267488,
+mesmas opcoes de dificuldade e cenario):
+
+    A seed reproduz o mapa. Os dois jogos deram a mesma impressao digital —
+    64 sistemas, 123 corpos, 99 setores de terreno — e o mesmo ponto de
+    partida (x=75724, y=235080).
+
+    A seed nao reproduz o resto. A tripulacao inicial saiu completamente
+    diferente (outros nomes, outros atributos, outras pericias), o nome da
+    nave mudou, e o interior das naves nao bate: na nave inicial 338 dos 630
+    elementos sao iguais, e a nave abandonada do setor inicial tem 414
+    elementos num jogo e 407 no outro.
+
+Ou seja: o mundo por onde se navega e o mesmo para todo mundo que usar a
+mesma seed, mas cada partida ganha sua propria tripulacao e seu proprio
+conteudo dentro das naves.
 """
 
 from __future__ import annotations
