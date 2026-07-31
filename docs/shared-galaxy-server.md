@@ -388,7 +388,75 @@ byte sem perturbar nada que não foi pedido.
 - subir o save final ao detectar que o jogo fechou
 - mostrar o mapa da sala entre sessões
 
-## 2.9 Fases
+## 2.9 Como o cliente conversa com o jogo
+
+**Princípio que não se negocia: a simulação é da Bugbyte e não se toca nela.**
+Tudo que este projeto faz é ler e gravar savegame — o mesmo que jogadores fazem
+na mão há anos. O servidor é uma camada ao lado do jogo, nunca dentro dele.
+
+### O launcher é configurável
+
+O executável `spacehaven` não é o jogo: é um launcher nativo de 86 KB que lê
+`config.json`, cria uma JVM e carrega a classe principal.
+
+```json
+{
+  "classPath": ["spacehaven.jar"],
+  "mainClass": "fi.bugbyte.spacehaven.steam.SpacehavenSteam",
+  "vmArgs": ["-Xmx4G"]
+}
+```
+
+Nas strings do binário aparecem `Error: no 'mainClass' element found in config!`
+e a assinatura de `URLClassLoader`. Classpath e classe principal são
+configuráveis por arquivo de texto, e as classes do jogo não estão ofuscadas.
+
+### Existe um template de mod da comunidade
+
+<https://github.com/Spacehaven-modding-tools/SpaceHavenModTemplate> — **da
+comunidade, não da Bugbyte.** Não há API oficial nem hooks providos pelo jogo.
+
+Ele usa AspectJ com weaving em tempo de carga: você declara pointcuts que
+envolvem métodos do jogo, coloca seu jar em `mods/` e acrescenta a entrada no
+`classPath` do `config.json`. Exige `aspectj-1.9.19` e `aspectjweaver` na pasta
+do jogo, e Java 17+. Pointcuts do tipo `around` envolvem um método e decidem se
+o original chega a rodar.
+
+### O que um mod desbloquearia
+
+Envolver as rotinas de gravação e carregamento dá **limites de sessão exatos**,
+em vez de vigiar arquivos de autosave e inferir. Indo além, dá para manipular
+objetos vivos do jogo em vez de editar arquivo, o que abriria a porta para
+colocar a nave de um vizinho no setor sem fechar a partida.
+
+### O que ele não muda
+
+A simulação continua local e não determinística. Dois jogadores se vendo mover
+ao vivo exigiria uma camada de rede nossa lutando contra as premissas do jogo.
+
+E o custo é real: o jogador precisa instalar AspectJ, editar o `config.json` e
+ter Java 17. Cada atualização do jogo pode quebrar os pointcuts, porque eles
+apontam para assinaturas de método que ninguém prometeu manter.
+
+### A decisão
+
+**O cliente lança o jogo ele mesmo.** Executa o binário e espera o processo
+terminar. Não toca em código nem em configuração, é só gerenciamento de
+processo, e resolve a regra mais importante do cliente: como ele é quem inicia e
+quem espera o fim, sabe com certeza quando o jogo está aberto e nunca escreve
+por cima.
+
+**O mod é opcional e não bloqueia fase nenhuma.** Um mod mínimo, que só envolva
+salvar e carregar sem tocar em lógica de jogo, melhora a precisão dos limites de
+sessão. Quem instalar ganha isso; quem não instalar continua funcionando com a
+vigilância de arquivos. Fazer dele um requisito multiplicaria a fricção de
+instalação antes de existir qualquer coisa para aproveitar — e o objetivo das
+primeiras fases é justamente descobrir se alguém quer isso.
+
+**Injeção ao vivo fica para depois de existirem jogadores.** É a evolução
+natural e agora se sabe que é possível.
+
+## 2.10 Fases
 
 | Fase | Entrega | O que prova |
 |---|---|---|
@@ -396,6 +464,10 @@ byte sem perturbar nada que não foi pedido.
 | **1** | batimento por autosave, mapa web da sala | a sala fica viva entre sessões |
 | **2** | injeção de vizinho, sem comércio | você abre o jogo e a nave de alguém está lá |
 | **3** | consignação e conciliação | comércio de verdade entre jogadores |
+
+Fora da fila, sem bloquear nada: o **mod mínimo** de 2.9, que dá limites de
+sessão exatos a quem quiser instalá-lo, e a **injeção ao vivo**, que só faz
+sentido depois que houver gente jogando.
 
 A fase 0 já é um produto sozinha: save na nuvem, com histórico e sem save
 scumming. E é a que mais ensina, porque expõe cedo o que é chato de verdade —
@@ -405,7 +477,7 @@ Escopo do primeiro corte: **só comércio e as missões que o próprio jogo gera
 Transferir tripulação e naves inteiras é possível (verificado), mas cada uma
 traz regra de jogo própria e pode esperar.
 
-## 2.10 Suposições ainda não testadas
+## 2.11 Suposições ainda não testadas
 
 Marcadas para quem for implementar não tomar como fato:
 
@@ -422,7 +494,7 @@ Marcadas para quem for implementar não tomar como fato:
 - **missões geradas em nave injetada.** O jogo criou uma. Não sabemos se ela se
   resolve bem, nem o que acontece se a nave sumir no meio
 
-## 2.11 Aviso legal
+## 2.12 Aviso legal
 
 Space Haven é um jogo da Bugbyte Ltd. Este é um projeto independente, feito por
 fã, sem vínculo com ela. Nada aqui altera o código do jogo: tudo é leitura e
