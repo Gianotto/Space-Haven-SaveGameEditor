@@ -12,12 +12,49 @@ mas o arquivo e lido e gravado por este processo, na sua maquina.
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 import threading
 import webbrowser
 
 from shedit.gamedata import GAMEDATA
 from shedit.server import serve
+
+
+def open_browser(url: str):
+    """Abre o navegador sem deixar o barulho dele cair neste terminal.
+
+    O navegador herda a saida deste processo, e os baseados em Chromium
+    despejam avisos de GPU, de Wayland e do sandbox que nao tem nada a ver com
+    o editor. Quem abre a ferramenta pela primeira vez le aquele bloco de
+    ERROR como defeito daqui.
+
+    A troca das duas saidas por /dev/null vale so durante o disparo — o filho
+    herda o descritor nesse instante e fica com ele. A janela e de
+    microssegundos e nada mais escreve nela: as mensagens do editor ja sairam
+    e o servidor so imprime ao encerrar.
+    """
+    sys.stdout.flush()
+    sys.stderr.flush()
+    try:
+        devnull = os.open(os.devnull, os.O_RDWR)
+    except OSError:
+        webbrowser.open(url)          # sem /dev/null, o barulho e o menor problema
+        return
+
+    saved = []
+    try:
+        for fd in (1, 2):
+            saved.append((fd, os.dup(fd)))
+            os.dup2(devnull, fd)
+        webbrowser.open(url)
+    except Exception:
+        pass                          # navegador que nao abre nao derruba o editor
+    finally:
+        for fd, copy in saved:
+            os.dup2(copy, fd)
+            os.close(copy)
+        os.close(devnull)
 
 
 def main() -> int:
@@ -50,7 +87,7 @@ def main() -> int:
     print("  Ctrl+C para encerrar.")
 
     if not args.no_browser:
-        threading.Timer(0.4, lambda: webbrowser.open(url)).start()
+        threading.Timer(0.4, open_browser, args=(url,)).start()
 
     try:
         httpd.serve_forever()
