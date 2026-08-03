@@ -85,6 +85,10 @@ def main() -> int:
         print("  aviso: shedit/data/gamedata.json ausente — os nomes aparecerão como IDs.")
         print("         gere com: python3 tools/extract_gamedata.py")
     print("  Ctrl+C para encerrar.")
+    # Num terminal a saida sai linha a linha, mas redirecionada para arquivo ou
+    # para um processo que le esta saida ela fica no buffer ate o fim — e quem
+    # esta esperando o endereco aparecer nao ve nada.
+    sys.stdout.flush()
 
     if not args.no_browser:
         threading.Timer(0.4, open_browser, args=(url,)).start()
