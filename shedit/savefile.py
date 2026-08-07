@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import glob
 import os
+import re
 import shutil
 import time
 import xml.etree.ElementTree as ET
@@ -39,8 +40,20 @@ class SaveError(Exception):
 # Serializacao no estilo do jogo
 # --------------------------------------------------------------------------
 
-_ATTR_ESCAPES = (("&", "&amp;"), ("<", "&lt;"), (">", "&gt;"), ('"', "&quot;"))
-_TEXT_ESCAPES = (("&", "&amp;"), ("<", "&lt;"), (">", "&gt;"))
+# O jogo nao escapa `&`: um nome gerado como "MFS SEARCH & DESTROY" vai cru
+# para dentro do atributo, e o arquivo deixa de ser XML bem formado. Nos 17
+# saves examinados nao existe uma unica entidade XML, entao a convencao dele e
+# essa — e gravar `&amp;` mudaria o arquivo e o nome que o jogo le. Escrevemos
+# como ele escreve, e consertamos apenas para conseguir interpretar.
+_ATTR_ESCAPES = (("<", "&lt;"), (">", "&gt;"), ('"', "&quot;"))
+_TEXT_ESCAPES = (("<", "&lt;"), (">", "&gt;"))
+
+# `&` que nao inicia uma entidade — o unico jeito de o ElementTree aceitar.
+_BARE_AMP = re.compile(rb"&(?![A-Za-z#][A-Za-z0-9]*;)")
+
+
+def _parseable(raw: bytes) -> bytes:
+    return _BARE_AMP.sub(b"&amp;", raw)
 
 
 def _esc(value: str, table) -> str:
@@ -101,7 +114,7 @@ class Document:
         except OSError as exc:
             raise SaveError(f"não foi possível ler {self.path}: {exc}") from exc
         try:
-            self.root = ET.fromstring(raw)
+            self.root = ET.fromstring(_parseable(raw))
         except ET.ParseError as exc:
             raise SaveError(f"{os.path.basename(self.path)} não é um XML válido: {exc}") from exc
         if self.expect_tag and self.root.tag != self.expect_tag:
@@ -134,7 +147,7 @@ class Document:
     def write(self, backup: bool = True) -> dict:
         blob = serialize(self.root) + getattr(self, "trailer", b"")
         try:
-            ET.fromstring(blob)
+            ET.fromstring(_parseable(blob))
         except ET.ParseError as exc:
             raise SaveError(
                 f"a árvore gerada para {os.path.basename(self.path)} é inválida, "
